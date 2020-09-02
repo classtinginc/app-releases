@@ -75,7 +75,7 @@ function fetchJSON<T>(token: string, path: string) {
           headers: {
             Authorization: `token ${token}`,
             "User-Agent":
-              "https://github.com/react-native-community/releases/blob/master/scripts/changelog-generator.js"
+              "https://github.com/classtinginc/app-releases/blob/master/scripts/changelog-generator.js"
           }
         })
         .on("response", response => {
@@ -114,7 +114,7 @@ export function fetchCommits(token: string, base: string, compare: string) {
     const fetchPage = () => {
       fetchJSON<Commit[]>(
         token,
-        `/repos/facebook/react-native/commits?sha=${compare}&page=${page++}`
+        `/repos/classtinginc/classting-rn/commits?sha=${compare}&page=${page++}`
       )
         .then(({ json, headers }) => {
           for (const commit of json) {
@@ -155,7 +155,7 @@ function filterCICommits(commits: Commit[]) {
       text.includes("travis") ||
       text.includes("circleci") ||
       text.includes("circle ci") ||
-      text.includes("bump version numbers") ||
+      text.includes("bump up version to") ||
       text.includes("docker")
     ) {
       console.warn(chalk.yellow(formatCommitLink(item.sha)));
@@ -436,23 +436,21 @@ function isRemoved(change: string) {
 }
 
 function isFixed(change: string) {
-  return /\b(fixed)\b/i.test(change);
+  return /\b(fixed)\b/i.test(change) || /\b(fix)\b/i.test(change);
 }
 
 function isSecurity(change: string) {
   return /\b(security)\b/i.test(change);
 }
 
-function isFabric(change: string) {
-  return /\b(fabric)\b/i.test(change);
-}
-
-function isTurboModules(change: string) {
-  return /\b(tm)\b/i.test(change);
-}
-
 function isInternal(change: string) {
-  return /\[internal\]/i.test(change);
+  return (
+    /\[internal\]/i.test(change) ||
+    /\b(chore)\b/i.test(change) || 
+    /\b(test)\b/i.test(change) ||  
+    /\b(release)\b/i.test(change) ||
+    /\b(docs)\b/i.test(change)
+  );
 }
 
 //*****************************************************************************
@@ -462,7 +460,7 @@ function isInternal(change: string) {
 //*****************************************************************************
 
 function formatCommitLink(sha: string) {
-  return `https://github.com/facebook/react-native/commit/${sha}`;
+  return `https://github.com/classtinginc/classting-rn/commit/${sha}`;
 }
 
 export function getChangeMessage(item: Commit, onlyMessage: boolean = false) {
@@ -518,8 +516,6 @@ export function getChangelogDesc(
     const message = getChangeMessage(item, onlyMessage);
 
     if (!verbose) {
-      if (isFabric(change.split("\n")[0])) return;
-      if (isTurboModules(change.split("\n")[0])) return;
       if (isInternal(change)) return;
     }
 
