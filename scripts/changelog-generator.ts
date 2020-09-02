@@ -12,6 +12,8 @@ import child_process from "child_process";
 import { IncomingHttpHeaders } from "http";
 import yargs from "yargs";
 
+require('dotenv').config()
+
 const execFile = util.promisify(child_process.execFile);
 
 const CHANGE_TYPE = [
@@ -23,6 +25,7 @@ const CHANGE_TYPE = [
   "fixed",
   "security",
   "unknown",
+  "devops",
   "failed"
 ] as const;
 
@@ -61,8 +64,9 @@ export type Changes = Record<(typeof CHANGE_TYPE)[number], PlatformChanges>;
 //#region NETWORK
 //*****************************************************************************
 
-function fetchJSON<T>(token: string, path: string) {
+function fetchJSON<T>(path: string) {
   const host = "api.github.com";
+  const token = process.env.GITHUB_TOKEN as string;
   console.warn(chalk.yellow(`https://${host}${path}`));
   return new Promise<{ json: T; headers: IncomingHttpHeaders }>(
     (resolve, reject) => {
@@ -105,7 +109,7 @@ function fetchJSON<T>(token: string, path: string) {
   );
 }
 
-export function fetchCommits(token: string, base: string, compare: string) {
+export function fetchCommits(base: string, compare: string) {
   console.warn(chalk.green("Fetch commit data"));
   console.group();
   const commits: Commit[] = [];
@@ -113,7 +117,6 @@ export function fetchCommits(token: string, base: string, compare: string) {
   return new Promise<Commit[]>((resolve, reject) => {
     const fetchPage = () => {
       fetchJSON<Commit[]>(
-        token,
         `/repos/classtinginc/classting-rn/commits?sha=${compare}&page=${page++}`
       )
         .then(({ json, headers }) => {
@@ -443,10 +446,14 @@ function isSecurity(change: string) {
   return /\b(security)\b/i.test(change);
 }
 
+function isDevops(change: string) {
+  return /\b(devops)\b/i.test(change) ||
+  /\b(chore)\b/i.test(change);
+}
+
 function isInternal(change: string) {
   return (
     /\[internal\]/i.test(change) ||
-    /\b(chore)\b/i.test(change) || 
     /\b(test)\b/i.test(change) ||  
     /\b(release)\b/i.test(change) ||
     /\b(docs)\b/i.test(change)
@@ -575,6 +582,14 @@ export function getChangelogDesc(
       } else {
         acc.security.general.push(message);
       }
+    } else if (isDevops(change)) {
+      if (isAndroidCommit(change)) {
+        acc.devops.android.push(message);
+      } else if (isIOSCommit(change)) {
+        acc.devops.ios.push(message);
+      } else {
+        acc.devops.general.push(message);
+      }
     } else if (item.commit.message.match(/changelog/i)) {
       acc.failed.general.push(message);
     } else {
@@ -693,6 +708,18 @@ ${data.security.android.join("\n")}
 
 ${data.security.ios.join("\n")}
 
+### Devops
+
+${data.devops.general.join("\n")}
+
+#### Android specific
+
+${data.devops.android.join("\n")}
+
+#### iOS specific
+
+${data.devops.ios.join("\n")}
+
 ### Unknown
 
 ${data.unknown.general.join("\n")}
@@ -743,12 +770,12 @@ export function getAllChangelogDescriptions(
 
 export function run(
   options: Parameters<typeof getAllChangelogDescriptions>[1] & {
-    token: string;
     base: string;
     compare: string;
   }
 ) {
-  return fetchCommits(options.token, options.base, options.compare)
+  const token = process.env.GITHUB_TOKEN as string;
+  return fetchCommits(options.base, options.compare)
     .then(commits => getAllChangelogDescriptions(commits, options))
     .then(changes => buildMarkDown(options.compare, changes));
 }
@@ -786,13 +813,6 @@ if (!module["parent"]) {
         describe: "The path to the existing CHANGELOG.md file",
         demandOption: true,
         default: path.resolve(__dirname, "../CHANGELOG.md")
-      },
-      token: {
-        alias: "t",
-        string: true,
-        describe:
-          "A GitHub token that has `public_repo` access (generate at https://github.com/settings/tokens)",
-        demandOption: true
       },
       maxWorkers: {
         alias: "w",
