@@ -139,7 +139,7 @@ describe("functions that hit GitHub's commits API", () => {
 
   describe(fetchCommits, () => {
     it("paginates back from `compare` to `base`", () => {
-      return fetchCommits("authn-token", base, compare).then(commits => {
+      return fetchCommits(base, compare).then(commits => {
         expect(commits.length).toEqual(59);
         expect(commits[0].sha).toEqual(
           "35300147ca66677f42e8544264be72ac0e9d1b45"
@@ -156,7 +156,6 @@ describe("functions that hit GitHub's commits API", () => {
       return run({
         base,
         compare,
-        token: "authn-token",
         gitDir: RN_REPO,
         maxWorkers: 10,
         existingChangelogData:

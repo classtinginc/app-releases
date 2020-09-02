@@ -12,7 +12,7 @@ import child_process from "child_process";
 import { IncomingHttpHeaders } from "http";
 import yargs from "yargs";
 
-require('dotenv').config()
+require("dotenv").config();
 
 const execFile = util.promisify(child_process.execFile);
 
@@ -23,7 +23,6 @@ const CHANGE_TYPE = [
   "deprecated",
   "removed",
   "fixed",
-  "security",
   "unknown",
   "devops",
   "failed"
@@ -215,7 +214,7 @@ function filterRevertCommits(commits: Commit[]) {
 }
 
 /**
- * @todo Perhaps it's more performant to first parse all commit SHAs out of the
+ * @todo Perhaps it's more performance to first parse all commit SHAs out of the
  *       existing changelog data.
  */
 function filterPreviouslyPickedCommits(
@@ -442,19 +441,14 @@ function isFixed(change: string) {
   return /\b(fixed)\b/i.test(change) || /\b(fix)\b/i.test(change);
 }
 
-function isSecurity(change: string) {
-  return /\b(security)\b/i.test(change);
-}
-
 function isDevops(change: string) {
-  return /\b(devops)\b/i.test(change) ||
-  /\b(chore)\b/i.test(change);
+  return /\b(devops)\b/i.test(change) || /\b(chore)\b/i.test(change);
 }
 
 function isInternal(change: string) {
   return (
     /\[internal\]/i.test(change) ||
-    /\b(test)\b/i.test(change) ||  
+    /\b(test)\b/i.test(change) ||
     /\b(release)\b/i.test(change) ||
     /\b(docs)\b/i.test(change)
   );
@@ -574,14 +568,6 @@ export function getChangelogDesc(
       } else {
         acc.deprecated.general.push(message);
       }
-    } else if (isSecurity(change)) {
-      if (isAndroidCommit(change)) {
-        acc.security.android.push(message);
-      } else if (isIOSCommit(change)) {
-        acc.security.ios.push(message);
-      } else {
-        acc.security.general.push(message);
-      }
     } else if (isDevops(change)) {
       if (isAndroidCommit(change)) {
         acc.devops.android.push(message);
@@ -695,18 +681,6 @@ ${data.fixed.android.join("\n")}
 #### iOS specific
 
 ${data.fixed.ios.join("\n")}
-
-### Security
-
-${data.security.general.join("\n")}
-
-#### Android specific
-
-${data.security.android.join("\n")}
-
-#### iOS specific
-
-${data.security.ios.join("\n")}
 
 ### Devops
 
