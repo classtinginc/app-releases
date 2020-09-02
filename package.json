@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "test": "jest",
+    "format:md": "prettier {.,docs}/*.md --write",
     "format": "prettier {.,docs}/*.md scripts{,/**}/*.ts --write",
     "format:check": "prettier {.,docs}/*.md scripts{,/**}/*.ts --list-different",
     "generate": "env TS_NODE_TRANSPILE_ONLY=true node $_NODE_OPTS -r ts-node/register ./scripts/changelog-generator.ts",
