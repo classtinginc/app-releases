@@ -23,8 +23,9 @@ const CHANGE_TYPE = [
   "deprecated",
   "removed",
   "fixed",
-  "unknown",
+  "developer",
   "devops",
+  "unknown",
   "failed"
 ] as const;
 
@@ -449,6 +450,7 @@ function isInternal(change: string) {
   return (
     /\[internal\]/i.test(change) ||
     /\b(test)\b/i.test(change) ||
+    /\b(build)\b/i.test(change) ||
     /\b(release)\b/i.test(change) ||
     /\b(docs)\b/i.test(change)
   );
@@ -516,10 +518,6 @@ export function getChangelogDesc(
 
     const message = getChangeMessage(item, onlyMessage);
 
-    if (!verbose) {
-      if (isInternal(change)) return;
-    }
-
     if (isBreaking(change)) {
       if (isAndroidCommit(change)) {
         acc.breaking.android.push(message);
@@ -575,6 +573,14 @@ export function getChangelogDesc(
         acc.devops.ios.push(message);
       } else {
         acc.devops.general.push(message);
+      }
+    } else if (isInternal(change)) {
+      if (isAndroidCommit(change)) {
+        acc.developer.android.push(message);
+      } else if (isIOSCommit(change)) {
+        acc.developer.ios.push(message);
+      } else {
+        acc.developer.general.push(message);
       }
     } else if (item.commit.message.match(/changelog/i)) {
       acc.failed.general.push(message);
@@ -693,6 +699,18 @@ ${data.devops.android.join("\n")}
 #### iOS specific
 
 ${data.devops.ios.join("\n")}
+
+### Developer
+
+${data.developer.general.join("\n")}
+
+#### Android specific
+
+${data.developer.android.join("\n")}
+
+#### iOS specific
+
+${data.developer.ios.join("\n")}
 
 ### Unknown
 
